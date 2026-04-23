@@ -164,6 +164,9 @@ background:transparent;
 
 <button onclick="loadPanel('dashboard','https://airtable.com/app2mz8mBElrg7tAw/pag5uF6teDS7matiM',this)">Dashboard</button>
 
+<div class="menu-divider"></div>
+<button id="customAppBtn" onclick="openCustomApp(this)">+ Añadir app al menú</button>
+
 </div>
 
 <div class="logo-bottom">
@@ -226,9 +229,40 @@ document.exitFullscreen()
 }
 }
 
+
+function openCustomApp(btn){
+const saved=JSON.parse(localStorage.getItem('menuCustomApp')||'null')
+
+if(saved && saved.url){
+loadPanel(saved.title||'Mi app', saved.url, btn)
+return
+}
+
+const title=prompt('Nombre para el nuevo punto de menú:','Mi app')
+if(!title) return
+
+const url=prompt('URL de la app que quieres añadir en el menú:','https://')
+if(!url) return
+
+localStorage.setItem('menuCustomApp', JSON.stringify({title:title,url:url}))
+btn.innerText=title
+loadPanel(title,url,btn)
+}
+
+function hydrateCustomAppButton(){
+const btn=document.getElementById('customAppBtn')
+if(!btn) return
+const saved=JSON.parse(localStorage.getItem('menuCustomApp')||'null')
+if(saved && saved.title){
+btn.innerText=saved.title
+}
+}
+
 window.onload=function(){
 
 let vista=localStorage.getItem("ultimaVista")
+
+hydrateCustomAppButton()
 
 if(vista){
 let v=JSON.parse(vista)
