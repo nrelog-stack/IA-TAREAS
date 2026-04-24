@@ -102,7 +102,31 @@ width:120px;
 flex:1;
 display:flex;
 flex-direction:column;
-height:100vh;
+}
+
+.topbar{
+height:56px;
+background:white;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 20px;
+border-bottom:1px solid rgba(0,0,0,0.08);
+}
+
+.top-title{
+font-weight:600;
+color:var(--green-main);
+font-size:18px;
+}
+
+.fullscreen-btn{
+background:var(--green-main);
+color:white;
+border:none;
+padding:6px 12px;
+border-radius:6px;
+cursor:pointer;
 }
 
 .viewer{
@@ -131,17 +155,33 @@ background:transparent;
 </div>
 
 <div class="menu">
-<button onclick="loadPanel('crear tarea','https://airtable.com/app2mz8mBElrg7tAw/paguY1ajBDExJ28Aq',this)">Crear tarea</button>
 
-<button onclick="loadPanel('panel','https://airtable.com/app2mz8mBElrg7tAw/pagbBvzrtfBFL2VX0',this)">Panel</button>
+<button onclick="openForm()">Registro</button>
 
-<button onclick="loadPanel('relacion tareas','https://airtable.com/app2mz8mBElrg7tAw/pagbqY7aB4tvWfrXU',this)">Relación tareas</button>
+<button onclick="loadPanel('Panel','https://airtable.com/embed/app2mz8mBElrg7tAw/shrwpMALi26XrQvqo',this)">Panel</button>
 
-<button onclick="loadPanel('dashboard','https://airtable.com/app2mz8mBElrg7tAw/pag5uF6teDS7matiM',this)">Dashboard</button>
-<button onclick="loadPanel('zite app','https://kvbsw3mezv.zite.so',this)">Zite app</button>
+<button onclick="loadPanel('Relación','https://airtable.com/embed/app2mz8mBElrg7tAw/shrN5bdVkVQADgXkw',this)">Relación</button>
+
+<button onclick="loadPanel('Mural','https://airtable.com/embed/app2mz8mBElrg7tAw/shrr0qObPNv4oJ7o8',this)">Mural</button>
+
+<button onclick="loadPanel('Informe','https://airtable.com/embed/app2mz8mBElrg7tAw/shrU1yP5IqKQuM19l',this)">Informe</button>
+
+
+<button onclick="loadPanel('Un Vistazo','https://airtable.com/embed/app2mz8mBElrg7tAw/shridA7PIeFZjXSRy',this)">Un Vistazo</button>
 
 <div class="menu-divider"></div>
-<button id="customAppBtn" onclick="openCustomApp(this)">+ Añadir app al menú</button>
+
+<button onclick="loadPanel('Control Sanitario Total','https://kvbsw3mezv.zite.so',this)">
+Control Sanitario Total
+</button>
+<button onclick="loadPanel('Control Sanitario Total','https://airtable.com/embed/app2mz8mBElrg7tAw/shrhbGDxkaaeV2hvU',this)">
+Control Sanitario Total
+</button>
+
+<button onclick="loadPanel('Control Sanitario Individual','https://airtable.com/embed/app2mz8mBElrg7tAw/shr3a6Scg7Rf7iHO3',this)">
+Control Sanitario Individual
+</button>
+
 </div>
 
 <div class="logo-bottom">
@@ -151,55 +191,72 @@ background:transparent;
 </div>
 
 <div class="main">
-<div id="viewer" class="viewer" style="width:100%;height:100%;">
-<iframe id="appFrame" src="" style="width:100%;height:100%;border:none;"></iframe>
+
+<div class="topbar">
+<div class="top-title" id="title">Panel</div>
+<button class="fullscreen-btn" onclick="fullscreen()">Pantalla completa</button>
 </div>
+
+<div class="viewer">
+<iframe id="frame"></iframe>
+</div>
+
 </div>
 
 <script>
-function loadPanel(title, url, el){
-const frame = document.getElementById('appFrame');
-if(frame) frame.src = url;
 
-document.querySelectorAll('.menu button').forEach(b => b.classList.remove('active'));
-if(el) el.classList.add('active');
+let registroWindow = null
+let clickLock = false
+
+function openForm(){
+
+if(clickLock) return
+clickLock = true
+setTimeout(()=>clickLock=false,1000)
+
+if(registroWindow && !registroWindow.closed){
+registroWindow.focus()
+}else{
+registroWindow = window.open("https://airtable.com/app2mz8mBElrg7tAw/pagaMWuc8tkBX3BBe/form", "registroTarea")
 }
 
-
-function openCustomApp(btn){
-const saved=JSON.parse(localStorage.getItem('menuCustomApp')||'null')
-
-if(saved && saved.url){
-loadPanel(saved.title||'Mi app', saved.url, btn)
-return
 }
 
-const title=prompt('Nombre para el nuevo punto de menú:','Mi app')
-if(!title) return
+function loadPanel(title,url,btn){
 
-const url=prompt('URL de la app que quieres añadir en el menú:','https://')
-if(!url) return
+document.getElementById("frame").src=url
+document.getElementById("title").innerText=title
 
-localStorage.setItem('menuCustomApp', JSON.stringify({title:title,url:url}))
-btn.innerText=title
-loadPanel(title,url,btn)
+localStorage.setItem("ultimaVista", JSON.stringify({title:title,url:url}))
+
+document.querySelectorAll(".menu button").forEach(b=>b.classList.remove("active"))
+if(btn) btn.classList.add("active")
+
 }
 
-function hydrateCustomAppButton(){
-const btn=document.getElementById('customAppBtn')
-if(!btn) return
-const saved=JSON.parse(localStorage.getItem('menuCustomApp')||'null')
-if(saved && saved.title){
-btn.innerText=saved.title
+function fullscreen(){
+let el=document.querySelector(".viewer")
+if(!document.fullscreenElement){
+el.requestFullscreen()
+}else{
+document.exitFullscreen()
 }
 }
 
-window.onload = function(){
-hydrateCustomAppButton()
+window.onload=function(){
 
-const firstButton = document.querySelector('.menu button');
-if(firstButton) firstButton.click();
-};
+let vista=localStorage.getItem("ultimaVista")
+
+if(vista){
+let v=JSON.parse(vista)
+document.getElementById("frame").src=v.url
+document.getElementById("title").innerText=v.title
+}else{
+document.getElementById("frame").src="https://airtable.com/embed/app2mz8mBElrg7tAw/shrwpMALi26XrQvqo"
+}
+
+}
+
 </script>
 
 </body>
